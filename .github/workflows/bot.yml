@@ -15,10 +15,10 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install dependencies
-        run: |
-          npm init -y
-          npm install nostr-tools node-fetch
+name: Install dependencies
+  run: |
+    npm init -y
+    npm install nostr-tools@2 node-fetch@2
 
       - name: Run bot
         env:
