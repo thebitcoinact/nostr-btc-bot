@@ -1,13 +1,8 @@
-import fetch from "node-fetch";
-import { relayInit, getEventHash, signEvent, getPublicKey } from "nostr-tools";
+const fetch = require("node-fetch");
+const { SimplePool, getEventHash, signEvent, getPublicKey, nip19 } = require("nostr-tools");
 
+const RELAYS = ["wss://relay.damus.io"];
 const NSEC = process.env.NOSTR_PRIVATE_KEY;
-const RELAY_URL = "wss://relay.damus.io";
-
-function hexFromNsec(nsec) {
-  const { data } = require("nostr-tools/nip19").decode(nsec);
-  return data;
-}
 
 async function getBTCPrice() {
   const r = await fetch(
@@ -18,13 +13,14 @@ async function getBTCPrice() {
 }
 
 async function main() {
-  if (!NSEC) throw new Error("Missing NOSTR_PRIVATE_KEY");
+  if (!NSEC) {
+    throw new Error("NOSTR_PRIVATE_KEY secret is missing");
+  }
 
-  const sk = hexFromNsec(NSEC);
+  // convert nsec → hex secret key
+  const decoded = nip19.decode(NSEC);
+  const sk = decoded.data;
   const pk = getPublicKey(sk);
-
-  const relay = relayInit(RELAY_URL);
-  await relay.connect();
 
   const price = await getBTCPrice();
 
@@ -39,8 +35,9 @@ async function main() {
   event.id = getEventHash(event);
   event.sig = signEvent(event, sk);
 
-  relay.publish(event);
-  relay.close();
+  const pool = new SimplePool();
+  await pool.publish(RELAYS, event);
+  pool.close(RELAYS);
 }
 
 main();
