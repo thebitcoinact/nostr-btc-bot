@@ -2,7 +2,7 @@ name: Nostr BTC Bot
 
 on:
   schedule:
-    - cron: "0 * * * *"  # every hour
+    - cron: "0 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -11,17 +11,17 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install Python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-node@v4
         with:
-          python-version: "3.11"
+          node-version: "20"
 
       - name: Install dependencies
         run: |
-          pip install requests nostr-sdk
+          npm init -y
+          npm install nostr-tools node-fetch
 
       - name: Run bot
         env:
           NOSTR_PRIVATE_KEY: ${{ secrets.NOSTR_PRIVATE_KEY }}
         run: |
-          python bot.py
+          node bot.js
