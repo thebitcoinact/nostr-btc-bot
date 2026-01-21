@@ -1,28 +1,29 @@
 import requests
-import json
-import websocket
-from nostr.event import Event
-from nostr.key import PrivateKey
-from nostr.message_type import ClientMessage
+import os
+from nostr_sdk import Keys, Client, EventBuilder
 
-PRIVATE_KEY = "${NOSTR_PRIVATE_KEY}"
+# 🔐 Get private key from GitHub Secrets
+NSEC = os.environ["NOSTR_PRIVATE_KEY"]
+
+# 🌍 Nostr relay
 RELAY = "wss://relay.damus.io"
 
 def get_btc_price():
     url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
     return requests.get(url).json()["bitcoin"]["usd"]
 
-def publish():
+def main():
     price = get_btc_price()
     content = f"₿ Bitcoin price: ${price} USD\n⏰ Automatic hourly update"
 
-    priv = PrivateKey.from_nsec(PRIVATE_KEY)
-    event = Event(priv.public_key.hex(), content)
-    event.sign(priv)
+    keys = Keys.parse(NSEC)
+    client = Client(keys)
+    client.add_relay(RELAY)
+    client.connect()
 
-    ws = websocket.WebSocket()
-    ws.connect(RELAY)
-    ws.send(json.dumps(ClientMessage.event(event.to_dict()).to_json_object()))
-    ws.close()
+    event = EventBuilder.text_note(content).to_event(keys)
+    client.send_event(event)
 
-publish()
+    client.disconnect()
+
+main()
