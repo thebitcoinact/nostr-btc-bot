@@ -1,11 +1,11 @@
 import requests
 import os
 from nostr_sdk import Keys, Client, EventBuilder
+from nostr_sdk.bech32 import decode_bech32
 
-# 🔐 Get private key from GitHub Secrets
+# 🔐 Read nsec key from GitHub Secrets
 NSEC = os.environ["NOSTR_PRIVATE_KEY"]
 
-# 🌍 Nostr relay
 RELAY = "wss://relay.damus.io"
 
 def get_btc_price():
@@ -16,7 +16,10 @@ def main():
     price = get_btc_price()
     content = f"₿ Bitcoin price: ${price} USD\n⏰ Automatic hourly update"
 
-    keys = Keys.parse(NSEC)
+    # 🔑 Convert nsec → hex
+    prefix, hex_key = decode_bech32(NSEC)
+    keys = Keys.from_sk_hex(hex_key)
+
     client = Client(keys)
     client.add_relay(RELAY)
     client.connect()
