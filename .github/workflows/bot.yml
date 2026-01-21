@@ -18,7 +18,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests websocket-client python-nostr
+          pip install requests nostr-sdk
 
       - name: Run bot
         env:
